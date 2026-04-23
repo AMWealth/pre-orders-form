@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<script src="config.js"></script>
     <title>Create Pre-Order</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -275,7 +274,7 @@ loadConfig();
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
 			            'x-functions-key': API_KEY
                     },
                     body: JSON.stringify(orderData)

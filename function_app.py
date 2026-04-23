@@ -181,7 +181,7 @@ def get_config(req: func.HttpRequest) -> func.HttpResponse:
         return create_response(200, {})
     
     config = {
-        'apiUrl': os.getenv('FUNCTION_APP_URL', 'https://amwealth-preorders-api.azurewebsites.net') + '/api/orders',
+        'apiUrl': os.getenv('FUNCTION_APP_URL', 'https://amwealth-preorders-api-ana9f3gkajd2bsga.uaenorth-01.azurewebsites.net/') + '/api/orders',
         'apiKey': os.getenv('FRONTEND_API_KEY', '')
     }
     
