@@ -228,14 +228,18 @@ def get_securities(req: func.HttpRequest) -> func.HttpResponse:
         """
         
         params = []
+        param_index = 1
+        
         if search:
-            query += " AND (UPPER(isin) LIKE %s OR UPPER(symbol) LIKE %s)"
+            query += f" AND (UPPER(isin) LIKE ${param_index} OR UPPER(symbol) LIKE ${param_index + 1})"
             search_pattern = f"%{search.upper()}%"
             params.extend([search_pattern, search_pattern])
+            param_index += 2
         
         if currency:
-            query += " AND UPPER(currencybase) = %s"
+            query += f" AND UPPER(currencybase) = ${param_index}"
             params.append(currency.upper())
+            param_index += 1
         
         query += " ORDER BY isin LIMIT 500"
         
