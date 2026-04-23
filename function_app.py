@@ -170,3 +170,18 @@ def health_check(req: func.HttpRequest) -> func.HttpResponse:
             'status': 'unhealthy',
             'error': str(e)
         })
+
+
+@app.route(route="config", methods=["GET", "OPTIONS"], auth_level=func.AuthLevel.ANONYMOUS)
+def get_config(req: func.HttpRequest) -> func.HttpResponse:
+    """Отдает публичную конфигурацию для frontend"""
+    
+    if req.method == "OPTIONS":
+        return create_response(200, {})
+    
+    config = {
+        'apiUrl': os.getenv('FUNCTION_APP_URL', 'https://amwealth-preorders-api.azurewebsites.net') + '/api/orders',
+        'apiKey': os.getenv('FRONTEND_API_KEY', '')
+    }
+    
+    return create_response(200, config)

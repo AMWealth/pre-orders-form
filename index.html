@@ -189,8 +189,23 @@
 
     <script>
 
-        const API_URL = CONFIG.API_URL;
-        const API_KEY = CONFIG.API_KEY;
+    let API_URL = '';
+    let API_KEY = '';
+
+// Загружаем конфиг с сервера
+    async function loadConfig() {
+        try {
+            const response = await fetch('https://amwealth-preorders-api-ana9f3gkajd2bsga.uaenorth-01.azurewebsites.net/api/config');
+            const config = await response.json();
+            API_URL = config.apiUrl;
+            API_KEY = config.apiKey;
+        } catch (error) {
+            console.error('Failed to load config:', error);
+        }
+    }
+
+// Загружаем конфиг при загрузке страницы
+loadConfig();
         const urlParams = new URLSearchParams(window.location.search);
         const consultantId = urlParams.get('consultantId') || '';
         const consultantName = urlParams.get('consultantName') || 'Not specified';
@@ -199,6 +214,13 @@
 
         document.getElementById('consultantInfo').textContent = consultantName;
         document.getElementById('clientInfo').textContent = clientName;
+		document.getElementById('orderForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+    
+    // Убедимся что конфиг загружен
+        if (!API_URL || !API_KEY) {
+            await loadConfig();
+        }
 
         // Показать/скрыть поле Price в зависимости от Execution Type
         document.getElementById('executionType').addEventListener('change', function() {
