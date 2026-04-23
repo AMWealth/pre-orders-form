@@ -261,7 +261,52 @@ def get_securities(req: func.HttpRequest) -> func.HttpResponse:
         
     except Exception as e:
         logger.error(f'Error getting securities: {e}', exc_info=True)
-        error = ErrorResponse(error='
+        error = ErrorResponse(error='Internal server error', details=[str(e)])
+        return create_response(500, error.model_dump())
+        
+        @app.route(route="instruments/currencies", methods=["GET", "OPTIONS"], auth_level=func.AuthLevel.ANONYMOUS)
+def get_currency_pairs(req: func.HttpRequest) -> func.HttpResponse:
+    """Получение списка валютных пар для конвертации"""
+    logger.info('Get currency pairs function triggered')
+    
+    if req.method == "OPTIONS":
+        return create_response(200, {})
+    
+    try:
+        query = """
+            SELECT DISTINCT
+                symbol,
+                currencybase
+            FROM market_service.tab_security_mt5
+            WHERE trademode = 4
+                AND path LIKE '%FX%'
+            ORDER BY symbol
+        """
+        
+        from db import MarketDatabase
+        results = MarketDatabase.execute_query(query)
+        
+        currency_pairs = [
+            {
+                'symbol': row['symbol'],
+                'currency': row['currencybase'],
+                'display': row['symbol'].replace('.', ' → ')
+            }
+            for row in results
+        ]
+        
+        logger.info(f'Retrieved {len(currency_pairs)} currency pairs')
+        
+        return create_response(200, {
+            'success': True,
+            'count': len(currency_pairs),
+            'currencies': currency_pairs
+        })
+        
+    except Exception as e:
+        logger.error(f'Error getting currency pairs: {e}', exc_info=True)
+        error = ErrorResponse(error='Internal server error', details=[str(e)])
+        return create_response(500, error.model_dump())
 
 @app.route(route="config", methods=["GET", "OPTIONS"], auth_level=func.AuthLevel.ANONYMOUS)
 def get_config(req: func.HttpRequest) -> func.HttpResponse:
