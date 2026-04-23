@@ -73,18 +73,27 @@ class Database:
                 cursor.close()
     
     @classmethod
-    def execute_query(cls, query: str, params: tuple = None):
-    """Выполнение SQL запроса"""
+    def execute_query(cls, query: str, params: tuple = None, fetch: bool = True):
+        """Выполнение SQL запроса"""
         with cls.get_cursor() as cursor:
-            cursor.execute(query, params or ())
-            return cursor.fetchall()
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+            if fetch:
+                return cursor.fetchall()
+            return cursor.rowcount
     
     @classmethod
     def execute_one(cls, query: str, params: tuple = None):
         """Выполнение запроса с возвратом одной строки"""
         with cls.get_cursor() as cursor:
-            cursor.execute(query, params or ())
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
             return cursor.fetchone()
+
 
 class MarketDatabase:
     """Класс для работы с market_service БД"""
@@ -138,7 +147,7 @@ class MarketDatabase:
     
     @classmethod
     def execute_query(cls, query: str, params: tuple = None):
-    """Выполнение SQL запроса"""
+        """Выполнение SQL запроса"""
         with cls.get_cursor() as cursor:
             if params:
                 cursor.execute(query, params)
@@ -148,7 +157,7 @@ class MarketDatabase:
     
     @classmethod
     def execute_one(cls, query: str, params: tuple = None):
-     """Выполнение запроса с возвратом одной строки"""
+        """Выполнение запроса с возвратом одной строки"""
         with cls.get_cursor() as cursor:
             if params:
                 cursor.execute(query, params)
@@ -160,4 +169,3 @@ class MarketDatabase:
 # Инициализация обеих БД
 Database.initialize()
 MarketDatabase.initialize()
-
