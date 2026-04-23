@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Pre-Order</title>
+	<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -121,6 +124,28 @@
             .row { grid-template-columns: 1fr; }
             .container { padding: 24px; }
         }
+        /* Select2 стили */
+        .select2-container {
+            width: 100% !important;
+        }
+        .select2-container--default .select2-selection--single {
+            height: 48px !important;
+            padding: 10px 14px !important;
+            border: 2px solid #e0e0e0 !important;
+            border-radius: 8px !important;
+            font-size: 15px !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 26px !important;
+            padding-left: 0 !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 46px !important;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #667eea !important;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        }
     </style>
 </head>
 <body>
@@ -134,13 +159,61 @@
         </div>
 
         <form id="orderForm">
+            <!-- Переключатель типа инструмента -->
             <div class="form-group">
-                <label for="isin">ISIN <span class="required">*</span></label>
-                <input type="text" id="isin" required placeholder="US0378331005" 
-                  maxlength="15">
-                <div class="input-hint">12 uppercase letters (e.g., US0378331005)</div>
+                <label>Instrument Type <span class="required">*</span></label>
+                <div style="display: flex; gap: 20px; margin-top: 10px;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="radio" name="instrumentType" value="security" checked 
+                               style="width: auto; margin-right: 8px;">
+                        <span>🏦 Security (Stock/Bond)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="radio" name="instrumentType" value="currency" 
+                               style="width: auto; margin-right: 8px;">
+                        <span>💱 Currency Conversion</span>
+                    </label>
+                </div>
             </div>
 
+            <!-- Для Security: ISIN + Currency -->
+            <div id="securityFields">
+                <div class="form-group">
+                    <label for="isinSelect">ISIN <span class="required">*</span></label>
+                    <select id="isinSelect" required style="width: 100%;">
+                        <option value="">Search and select ISIN...</option>
+                    </select>
+                    <div class="input-hint">Search by ISIN code</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="currencySelect">Operation Currency <span class="required">*</span></label>
+                    <select id="currencySelect" required>
+                        <option value="">Select currency...</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                        <option value="AED">AED</option>
+                        <option value="CHF">CHF</option>
+                        <option value="HKD">HKD</option>
+                        <option value="CAD">CAD</option>
+                    </select>
+                    <div class="input-hint">Currency for this operation</div>
+                </div>
+            </div>
+
+            <!-- Для Currency: валютная пара -->
+            <div id="currencyFields" style="display: none;">
+                <div class="form-group">
+                    <label for="currencyPairSelect">Currency Pair <span class="required">*</span></label>
+                    <select id="currencyPairSelect" style="width: 100%;">
+                        <option value="">Select currency pair...</option>
+                    </select>
+                    <div class="input-hint">Select conversion pair</div>
+                </div>
+            </div>
+
+            <!-- Общие поля -->
             <div class="row">
                 <div class="form-group">
                     <label for="orderType">Order Type <span class="required">*</span></label>
@@ -205,6 +278,101 @@
         // Загружаем конфиг при загрузке страницы
         loadConfig();
 
+        // Переменные для хранения данных
+        let securitiesData = [];
+        let currenciesData = [];
+
+        // Загрузка списка инструментов
+        async function loadSecurities() {
+            try {
+                const response = await fetch('https://amwealth-preorders-api-ana9f3gkajd2bsga.uaenorth-01.azurewebsites.net/api/instruments/securities');
+                const data = await response.json();
+                if (data.success) {
+                    securitiesData = data.securities;
+                    
+                    // Заполняем dropdown
+                    const select = $('#isinSelect');
+                    select.empty();
+                    select.append('<option value="">Search and select ISIN...</option>');
+                    
+                    data.securities.forEach(sec => {
+                        select.append(new Option(sec.display, sec.isin));
+                    });
+                    
+                    // Инициализация Select2 с поиском
+                    select.select2({
+                        placeholder: 'Search and select ISIN...',
+                        allowClear: true,
+                        width: '100%'
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load securities:', error);
+            }
+        }
+
+        // Загрузка валютных пар
+        async function loadCurrencyPairs() {
+            try {
+                const response = await fetch('https://amwealth-preorders-api-ana9f3gkajd2bsga.uaenorth-01.azurewebsites.net/api/instruments/currencies');
+                const data = await response.json();
+                if (data.success) {
+                    currenciesData = data.currencies;
+                    
+                    const select = $('#currencyPairSelect');
+                    select.empty();
+                    select.append('<option value="">Select currency pair...</option>');
+                    
+                    data.currencies.forEach(curr => {
+                        select.append(new Option(curr.display, curr.symbol));
+                    });
+                    
+                    select.select2({
+                        placeholder: 'Select currency pair...',
+                        allowClear: true,
+                        width: '100%'
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load currency pairs:', error);
+            }
+        }
+
+        // Загружаем данные при загрузке страницы
+        loadSecurities();
+        loadCurrencyPairs();
+
+        // Переключение между Security и Currency
+        document.querySelectorAll('input[name="instrumentType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const securityFields = document.getElementById('securityFields');
+                const currencyFields = document.getElementById('currencyFields');
+                const isinSelect = document.getElementById('isinSelect');
+                const currencySelect = document.getElementById('currencySelect');
+                const currencyPairSelect = document.getElementById('currencyPairSelect');
+                
+                if (this.value === 'security') {
+                    // Показать поля для Security
+                    securityFields.style.display = 'block';
+                    currencyFields.style.display = 'none';
+                    
+                    // Обязательные поля
+                    isinSelect.required = true;
+                    currencySelect.required = true;
+                    currencyPairSelect.required = false;
+                } else {
+                    // Показать поля для Currency
+                    securityFields.style.display = 'none';
+                    currencyFields.style.display = 'block';
+                    
+                    // Обязательные поля
+                    isinSelect.required = false;
+                    currencySelect.required = false;
+                    currencyPairSelect.required = true;
+                }
+            });
+        });
+
         const urlParams = new URLSearchParams(window.location.search);
         const consultantId = urlParams.get('consultantId') || '';
         const consultantName = urlParams.get('consultantName') || 'Not specified';
@@ -257,12 +425,21 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = 'Creating Order... <span class="loader"></span>';
             
+            const instrumentType = document.querySelector('input[name="instrumentType"]:checked').value;
+            let isinValue = '';
+            
+            if (instrumentType === 'security') {
+                isinValue = document.getElementById('isinSelect').value;
+            } else {
+                isinValue = document.getElementById('currencyPairSelect').value;
+            }
+            
             const orderData = {
                 consultant_id: consultantId,
                 consultant_name: consultantName,
                 client_id: clientId,
                 client_name: clientName,
-                isin: document.getElementById('isin').value.toUpperCase(),
+                isin: isinValue,
                 order_type: document.getElementById('orderType').value,
                 execution_type: document.getElementById('executionType').value,
                 quantity: parseFloat(document.getElementById('quantity').value),
