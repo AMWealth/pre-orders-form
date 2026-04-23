@@ -24,7 +24,7 @@ class OrderCreate(BaseModel):
     @classmethod
     def isin_uppercase(cls, v: str) -> str:
         """ISIN или Symbol всегда в верхнем регистре"""
-        return v.upper().strip()@field_validator('isin')
+        return v.upper().strip()
 
     @field_validator('quantity')
     @classmethod
