@@ -242,6 +242,9 @@
             if (!API_URL || !API_KEY) {
                 await loadConfig();
             }
+			
+			console.log('API_URL:', API_URL);
+            console.log('API_KEY:', API_KEY ? 'EXISTS' : 'MISSING');
             
             const submitBtn = document.getElementById('submitBtn');
             const messageDiv = document.getElementById('message');
