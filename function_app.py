@@ -6,7 +6,7 @@ from datetime import datetime
 from pydantic import ValidationError
 
 from models import OrderCreate, OrderResponse, OrderDetail, ErrorResponse
-from db import Database
+from db import Database, MarketDatabase
 import os
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
@@ -264,7 +264,7 @@ def get_securities(req: func.HttpRequest) -> func.HttpResponse:
         error = ErrorResponse(error='Internal server error', details=[str(e)])
         return create_response(500, error.model_dump())
         
-        @app.route(route="instruments/currencies", methods=["GET", "OPTIONS"], auth_level=func.AuthLevel.ANONYMOUS)
+@app.route(route="instruments/currencies", methods=["GET", "OPTIONS"], auth_level=func.AuthLevel.ANONYMOUS)    
 def get_currency_pairs(req: func.HttpRequest) -> func.HttpResponse:
     """Получение списка валютных пар для конвертации"""
     logger.info('Get currency pairs function triggered')
