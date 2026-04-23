@@ -213,6 +213,8 @@ def get_securities(req: func.HttpRequest) -> func.HttpResponse:
         search = req.params.get('search', '')
         currency = req.params.get('currency', '')
         
+        logger.info(f'Fetching securities: search={search}, currency={currency}')
+        
         query = """
             SELECT DISTINCT
                 isin,
@@ -226,7 +228,6 @@ def get_securities(req: func.HttpRequest) -> func.HttpResponse:
         """
         
         params = []
-        
         if search:
             query += " AND (UPPER(isin) LIKE %s OR UPPER(symbol) LIKE %s)"
             search_pattern = f"%{search.upper()}%"
@@ -238,8 +239,17 @@ def get_securities(req: func.HttpRequest) -> func.HttpResponse:
         
         query += " ORDER BY isin LIMIT 500"
         
-        from db import MarketDatabase
-        results = MarketDatabase.execute_query(query, tuple(params) if params else None)
+        logger.info(f'Executing query with params: {params}')
+        
+        results = MarketDatabase.execute_query(
+            query, 
+            tuple(params) if params else ()
+        )
+        
+        logger.info(f'Query returned {len(results) if results else 0} results')
+        
+        if not results:
+            results = []
         
         securities = [
             {
@@ -251,7 +261,7 @@ def get_securities(req: func.HttpRequest) -> func.HttpResponse:
             for row in results
         ]
         
-        logger.info(f'Retrieved {len(securities)} securities')
+        logger.info(f'Returning {len(securities)} securities')
         
         return create_response(200, {
             'success': True,
@@ -261,7 +271,12 @@ def get_securities(req: func.HttpRequest) -> func.HttpResponse:
         
     except Exception as e:
         logger.error(f'Error getting securities: {e}', exc_info=True)
-        error = ErrorResponse(error='Internal server error', details=[str(e)])
+        import traceback
+        logger.error(f'Traceback: {traceback.format_exc()}')
+        error = ErrorResponse(
+            error='Internal server error', 
+            details=[str(e), traceback.format_exc()]
+        )
         return create_response(500, error.model_dump())
         
 @app.route(route="instruments/currencies", methods=["GET", "OPTIONS"], auth_level=func.AuthLevel.ANONYMOUS)    
