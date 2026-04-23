@@ -70,7 +70,7 @@ def create_order(req: func.HttpRequest) -> func.HttpResponse:
         
         # Аудит лог
         audit_query = """
-            INSERT INTO order_audit_log (order_id, action, new_status, performed_by, details)
+            INSERT INTO clients_service.order_audit_log (order_id, action, new_status, performed_by, details)
             VALUES (%s, %s, %s, %s, %s)
         """
         Database.execute_query(
