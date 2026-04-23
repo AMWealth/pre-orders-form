@@ -11,7 +11,7 @@ class OrderCreate(BaseModel):
     consultant_name: str = Field(..., min_length=1, max_length=200)
     client_id: str = Field(..., min_length=1, max_length=50)
     client_name: str = Field(..., min_length=1, max_length=200)
-    isin: str = Field(..., min_length=1, max_length=15)
+    isin: str = Field(..., min_length=1, max_length=50)
     order_type: Literal['Buy', 'Sell']
     execution_type: Literal['Market', 'Limit']
     quantity: Decimal = Field(..., gt=0)
@@ -23,8 +23,8 @@ class OrderCreate(BaseModel):
     @field_validator('isin')
     @classmethod
     def isin_uppercase(cls, v: str) -> str:
-        """ISIN всегда в верхнем регистре"""
-        return v.upper()
+        """ISIN или Symbol всегда в верхнем регистре"""
+        return v.upper().strip()@field_validator('isin')
 
     @field_validator('quantity')
     @classmethod

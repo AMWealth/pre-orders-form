@@ -88,6 +88,72 @@ class Database:
             cursor.execute(query, params or ())
             return cursor.fetchone()
 
+class MarketDatabase:
+    """Класс для работы с market_service БД"""
+    
+    _connection_pool: Optional[pool.SimpleConnectionPool] = None
+    
+    @classmethod
+    def initialize(cls):
+        """Инициализация пула подключений к market DB"""
+        if cls._connection_pool is None:
+            try:
+                cls._connection_pool = pool.SimpleConnectionPool(
+                    minconn=1,
+                    maxconn=10,
+                    host=os.getenv('MARKET_POSTGRES_HOST'),
+                    port=os.getenv('MARKET_POSTGRES_PORT', '5432'),
+                    database=os.getenv('MARKET_POSTGRES_DATABASE'),
+                    user=os.getenv('MARKET_POSTGRES_USER'),
+                    password=os.getenv('MARKET_POSTGRES_PASSWORD'),
+                    sslmode='require',
+                    connect_timeout=10
+                )
+                logger.info("Market database connection pool initialized")
+            except Exception as e:
+                logger.error(f"Failed to initialize market database pool: {e}")
+                raise
+    
+    @classmethod
+    @contextmanager
+    def get_cursor(cls, cursor_factory=RealDictCursor):
+        """Context manager для получения курсора"""
+        if cls._connection_pool is None:
+            cls.initialize()
+        
+        connection = None
+        try:
+            connection = cls._connection_pool.getconn()
+            cursor = connection.cursor(cursor_factory=cursor_factory)
+            yield cursor
+            connection.commit()
+        except Exception as e:
+            if connection:
+                connection.rollback()
+            logger.error(f"Market DB cursor error: {e}")
+            raise
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                cls._connection_pool.putconn(connection)
+    
+    @classmethod
+    def execute_query(cls, query: str, params: tuple = None):
+        """Выполнение SQL запроса"""
+        with cls.get_cursor() as cursor:
+            cursor.execute(query, params or ())
+            return cursor.fetchall()
+    
+    @classmethod
+    def execute_one(cls, query: str, params: tuple = None):
+        """Выполнение запроса с возвратом одной строки"""
+        with cls.get_cursor() as cursor:
+            cursor.execute(query, params or ())
+            return cursor.fetchone()
 
-# Инициализация при импорте
+
+# Инициализация обеих БД
 Database.initialize()
+MarketDatabase.initialize()
+

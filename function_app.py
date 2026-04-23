@@ -41,6 +41,36 @@ def create_order(req: func.HttpRequest) -> func.HttpResponse:
         
         logger.info(f'Creating order: {order_data.isin}')
         
+        # Проверка существования инструмента в market_service
+        from db import MarketDatabase
+        
+        validation_query = """
+            SELECT symbol, isin, currencybase, trademode
+            FROM market_service.tab_security_mt5
+            WHERE trademode = 4
+                AND (
+                    isin = %s 
+                    OR symbol = %s
+                )
+            LIMIT 1
+        """
+        
+        instrument = MarketDatabase.execute_one(
+            validation_query, 
+            (order_data.isin, order_data.isin)
+        )
+        
+        if not instrument:
+            logger.warning(f'Instrument not found or not tradeable: {order_data.isin}')
+            error = ErrorResponse(
+                error='Instrument not found',
+                details=[f'ISIN/Symbol "{order_data.isin}" not found or not available for trading']
+            )
+            return create_response(404, error.model_dump())
+        
+        logger.info(f'Instrument validated: {instrument["symbol"]}')
+        # ===== КОНЕЦ ПРОВЕРКИ =====
+        
         insert_query = """
             INSERT INTO clients_service.pre_orders (
                 consultant_id, consultant_name, client_id, client_name,
@@ -171,7 +201,67 @@ def health_check(req: func.HttpRequest) -> func.HttpResponse:
             'status': 'unhealthy',
             'error': str(e)
         })
-
+@app.route(route="instruments/securities", methods=["GET", "OPTIONS"], auth_level=func.AuthLevel.ANONYMOUS)
+def get_securities(req: func.HttpRequest) -> func.HttpResponse:
+    """Получение списка доступных инструментов (акции, облигации)"""
+    logger.info('Get securities function triggered')
+    
+    if req.method == "OPTIONS":
+        return create_response(200, {})
+    
+    try:
+        search = req.params.get('search', '')
+        currency = req.params.get('currency', '')
+        
+        query = """
+            SELECT DISTINCT
+                isin,
+                symbol,
+                currencybase
+            FROM market_service.tab_security_mt5
+            WHERE trademode = 4
+                AND isin IS NOT NULL
+                AND isin != ''
+                AND path NOT LIKE '%FX%'
+        """
+        
+        params = []
+        
+        if search:
+            query += " AND (UPPER(isin) LIKE %s OR UPPER(symbol) LIKE %s)"
+            search_pattern = f"%{search.upper()}%"
+            params.extend([search_pattern, search_pattern])
+        
+        if currency:
+            query += " AND UPPER(currencybase) = %s"
+            params.append(currency.upper())
+        
+        query += " ORDER BY isin LIMIT 500"
+        
+        from db import MarketDatabase
+        results = MarketDatabase.execute_query(query, tuple(params) if params else None)
+        
+        securities = [
+            {
+                'isin': row['isin'],
+                'symbol': row['symbol'],
+                'currency': row['currencybase'],
+                'display': f"{row['isin']} ({row['currencybase']})"
+            }
+            for row in results
+        ]
+        
+        logger.info(f'Retrieved {len(securities)} securities')
+        
+        return create_response(200, {
+            'success': True,
+            'count': len(securities),
+            'securities': securities
+        })
+        
+    except Exception as e:
+        logger.error(f'Error getting securities: {e}', exc_info=True)
+        error = ErrorResponse(error='
 
 @app.route(route="config", methods=["GET", "OPTIONS"], auth_level=func.AuthLevel.ANONYMOUS)
 def get_config(req: func.HttpRequest) -> func.HttpResponse:
