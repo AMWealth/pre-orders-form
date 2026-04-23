@@ -397,10 +397,6 @@
             }
         });
 
-        // Автоматическое приведение ISIN к верхнему регистру
-        document.getElementById('isin').addEventListener('input', function(e) {
-            e.target.value = e.target.value.toUpperCase();
-        });
 
         // Обработка отправки формы
         document.getElementById('orderForm').addEventListener('submit', async function(e) {
