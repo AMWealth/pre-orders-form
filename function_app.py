@@ -228,22 +228,21 @@ def get_securities(req: func.HttpRequest) -> func.HttpResponse:
         """
         
         params = []
-        param_index = 1
         
         if search:
-            query += f" AND (UPPER(isin) LIKE ${param_index} OR UPPER(symbol) LIKE ${param_index + 1})"
+            query += " AND (UPPER(isin) LIKE %s OR UPPER(symbol) LIKE %s)"
             search_pattern = f"%{search.upper()}%"
-            params.extend([search_pattern, search_pattern])
-            param_index += 2
+            params.append(search_pattern)
+            params.append(search_pattern)
         
         if currency:
-            query += f" AND UPPER(currencybase) = ${param_index}"
+            query += " AND UPPER(currencybase) = %s"
             params.append(currency.upper())
-            param_index += 1
         
         query += " ORDER BY isin LIMIT 500"
         
-        logger.info(f'Executing query with params: {params}')
+        logger.info(f'Query: {query}')
+        logger.info(f'Params: {params}')
         
         results = MarketDatabase.execute_query(
             query, 
