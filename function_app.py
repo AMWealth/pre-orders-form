@@ -243,7 +243,7 @@ def get_securities(req: func.HttpRequest) -> func.HttpResponse:
         
         results = MarketDatabase.execute_query(
             query, 
-            tuple(params) if params else ()
+            tuple(params) if params else None
         )
         
         logger.info(f'Query returned {len(results) if results else 0} results')

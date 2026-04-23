@@ -73,13 +73,14 @@ class Database:
                 cursor.close()
     
     @classmethod
-    def execute_query(cls, query: str, params: tuple = None, fetch: bool = True):
+    def execute_query(cls, query: str, params: tuple = None):
         """Выполнение SQL запроса"""
         with cls.get_cursor() as cursor:
-            cursor.execute(query, params or ())
-            if fetch:
-                return cursor.fetchall()
-            return cursor.rowcount
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+            return cursor.fetchall()
     
     @classmethod
     def execute_one(cls, query: str, params: tuple = None):
