@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from models import OrderCreate, OrderResponse, OrderDetail, ErrorResponse
 from db import Database
+import os
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 logger = logging.getLogger(__name__)
