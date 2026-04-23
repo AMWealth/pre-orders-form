@@ -276,7 +276,7 @@
         <div id="message" class="message"></div>
     </div>
 
-        <script>
+    <script>
         let API_URL = '';
         let API_KEY = '';
 
@@ -295,24 +295,29 @@
         // Загружаем конфиг при загрузке страницы
         loadConfig();
 
-        // Переменные для хранения данных
-        let securitiesData = [];
-        let currenciesData = [];
+        // Параметры из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const consultantId = urlParams.get('consultantId') || '';
+        const consultantName = urlParams.get('consultantName') || 'Not specified';
+        const clientId = urlParams.get('clientId') || '';
+        const clientName = urlParams.get('clientName') || 'Not specified';
 
-        // Загрузка списка инструментов
+        document.getElementById('consultantInfo').textContent = consultantName;
+        document.getElementById('clientInfo').textContent = clientName;
+
         // Инициализация Select2 с динамическим поиском для ISIN
         function initISINSelect() {
             $('#isinSelect').select2({
-                placeholder: 'Type to search ISIN...',
+                placeholder: 'Type to search ISIN (min 2 chars)...',
                 allowClear: true,
                 width: '100%',
-                minimumInputLength: 2, // Начинать поиск с 2 символов
+                minimumInputLength: 2,
                 ajax: {
                     url: 'https://amwealth-preorders-api-ana9f3gkajd2bsga.uaenorth-01.azurewebsites.net/api/instruments/securities',
-                    delay: 300, // Задержка перед поиском (мс)
+                    delay: 300,
                     data: function (params) {
                         return {
-                            search: params.term // Поисковый запрос
+                            search: params.term
                         };
                     },
                     processResults: function (data) {
@@ -337,8 +342,6 @@
                 const response = await fetch('https://amwealth-preorders-api-ana9f3gkajd2bsga.uaenorth-01.azurewebsites.net/api/instruments/currencies');
                 const data = await response.json();
                 if (data.success) {
-                    currenciesData = data.currencies;
-                    
                     const select = $('#currencyPairSelect');
                     select.empty();
                     select.append('<option value="">Select currency pair...</option>');
@@ -358,142 +361,143 @@
             }
         }
 
-        // Загружаем данные при загрузке страницы
-        // Инициализируем Select2 dropdowns
-        initISINSelect();
-        loadCurrencyPairs();
+        // Инициализация после загрузки DOM
+        $(document).ready(function() {
+            // Инициализируем Select2 dropdowns
+            initISINSelect();
+            loadCurrencyPairs();
+            
+            // Переключение между Security и Currency
+            document.querySelectorAll('input[name="instrumentType"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const securityFields = document.getElementById('securityFields');
+                    const currencyFields = document.getElementById('currencyFields');
+                    const isinSelect = document.getElementById('isinSelect');
+                    const currencySelect = document.getElementById('currencySelect');
+                    const currencyPairSelect = document.getElementById('currencyPairSelect');
+                    
+                    if (this.value === 'security') {
+                        securityFields.style.display = 'block';
+                        currencyFields.style.display = 'none';
+                        isinSelect.required = true;
+                        currencySelect.required = true;
+                        currencyPairSelect.required = false;
+                    } else {
+                        securityFields.style.display = 'none';
+                        currencyFields.style.display = 'block';
+                        isinSelect.required = false;
+                        currencySelect.required = false;
+                        currencyPairSelect.required = true;
+                    }
+                });
+            });
 
-        // Переключение между Security и Currency
-        document.querySelectorAll('input[name="instrumentType"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const securityFields = document.getElementById('securityFields');
-                const currencyFields = document.getElementById('currencyFields');
-                const isinSelect = document.getElementById('isinSelect');
-                const currencySelect = document.getElementById('currencySelect');
-                const currencyPairSelect = document.getElementById('currencyPairSelect');
+            // Показать/скрыть поле Price в зависимости от Execution Type
+            document.getElementById('executionType').addEventListener('change', function() {
+                const priceGroup = document.getElementById('priceGroup');
+                const priceInput = document.getElementById('price');
                 
-                if (this.value === 'security') {
-                    // Показать поля для Security
-                    securityFields.style.display = 'block';
-                    currencyFields.style.display = 'none';
-                    
-                    // Обязательные поля
-                    isinSelect.required = true;
-                    currencySelect.required = true;
-                    currencyPairSelect.required = false;
+                if (this.value === 'Limit') {
+                    priceGroup.style.display = 'block';
+                    priceInput.required = true;
                 } else {
-                    // Показать поля для Currency
-                    securityFields.style.display = 'none';
-                    currencyFields.style.display = 'block';
-                    
-                    // Обязательные поля
-                    isinSelect.required = false;
-                    currencySelect.required = false;
-                    currencyPairSelect.required = true;
+                    priceGroup.style.display = 'none';
+                    priceInput.required = false;
+                    priceInput.value = '';
                 }
             });
-        });
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const consultantId = urlParams.get('consultantId') || '';
-        const consultantName = urlParams.get('consultantName') || 'Not specified';
-        const clientId = urlParams.get('clientId') || '';
-        const clientName = urlParams.get('clientName') || 'Not specified';
-
-        document.getElementById('consultantInfo').textContent = consultantName;
-        document.getElementById('clientInfo').textContent = clientName;
-
-        // Показать/скрыть поле Price в зависимости от Execution Type
-        document.getElementById('executionType').addEventListener('change', function() {
-            const priceGroup = document.getElementById('priceGroup');
-            const priceInput = document.getElementById('price');
-            
-            if (this.value === 'Limit') {
-                priceGroup.style.display = 'block';
-                priceInput.required = true;
-            } else {
-                priceGroup.style.display = 'none';
-                priceInput.required = false;
-                priceInput.value = '';
-            }
-        });
-
-
-        // Обработка отправки формы
-        document.getElementById('orderForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            // Убедимся что конфиг загружен
-            if (!API_URL || !API_KEY) {
-                await loadConfig();
-            }
-			
-			console.log('API_URL:', API_URL);
-            console.log('API_KEY:', API_KEY ? 'EXISTS' : 'MISSING');
-            
-            const submitBtn = document.getElementById('submitBtn');
-            const messageDiv = document.getElementById('message');
-            
-            if (!consultantId || !clientId) {
-                showMessage('error', 'Missing required parameters from Power BI');
-                return;
-            }
-            
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = 'Creating Order... <span class="loader"></span>';
-            
-            const instrumentType = document.querySelector('input[name="instrumentType"]:checked').value;
-            let isinValue = '';
-            
-            if (instrumentType === 'security') {
-                isinValue = document.getElementById('isinSelect').value;
-            } else {
-                isinValue = document.getElementById('currencyPairSelect').value;
-            }
-            
-            const orderData = {
-                consultant_id: consultantId,
-                consultant_name: consultantName,
-                client_id: clientId,
-                client_name: clientName,
-                isin: isinValue,
-                order_type: document.getElementById('orderType').value,
-                execution_type: document.getElementById('executionType').value,
-                quantity: parseFloat(document.getElementById('quantity').value),
-                price: document.getElementById('price').value ? parseFloat(document.getElementById('price').value) : null,
-                comment: document.getElementById('comment').value || null,
-                created_by: consultantName
-            };
-            
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-functions-key': API_KEY
-                    },
-                    body: JSON.stringify(orderData)
-                });
+            // Обработка отправки формы
+            document.getElementById('orderForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
                 
-                const result = await response.json();
-                
-                if (response.ok && result.success) {
-                    showMessage('success',
-                        `✓ Pre-Order #${result.order_id} created successfully!`
-                    );
-                    document.getElementById('orderForm').reset();
-                    document.getElementById('priceGroup').style.display = 'none';
-                    setTimeout(() => window.close(), 3000);
-                } else {
-                    throw new Error(result.error || 'Unknown error');
+                // Убедимся что конфиг загружен
+                if (!API_URL || !API_KEY) {
+                    await loadConfig();
                 }
                 
-            } catch (error) {
-                showMessage('error', `❌ Error: ${error.message}`);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Create Pre-Order';
-            }
+                const submitBtn = document.getElementById('submitBtn');
+                const messageDiv = document.getElementById('message');
+                
+                if (!consultantId || !clientId) {
+                    showMessage('error', 'Missing required parameters from Power BI');
+                    return;
+                }
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Creating Order... <span class="loader"></span>';
+                
+                // Определяем тип инструмента и получаем ISIN
+                const instrumentType = document.querySelector('input[name="instrumentType"]:checked').value;
+                let isinValue = '';
+                
+                if (instrumentType === 'security') {
+                    isinValue = document.getElementById('isinSelect').value;
+                    if (!isinValue) {
+                        showMessage('error', 'Please select an ISIN');
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Create Pre-Order';
+                        return;
+                    }
+                } else {
+                    isinValue = document.getElementById('currencyPairSelect').value;
+                    if (!isinValue) {
+                        showMessage('error', 'Please select a currency pair');
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Create Pre-Order';
+                        return;
+                    }
+                }
+                
+                const orderData = {
+                    consultant_id: consultantId,
+                    consultant_name: consultantName,
+                    client_id: clientId,
+                    client_name: clientName,
+                    isin: isinValue,
+                    order_type: document.getElementById('orderType').value,
+                    execution_type: document.getElementById('executionType').value,
+                    quantity: parseFloat(document.getElementById('quantity').value),
+                    price: document.getElementById('price').value ? parseFloat(document.getElementById('price').value) : null,
+                    comment: document.getElementById('comment').value || null,
+                    created_by: consultantName
+                };
+                
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-functions-key': API_KEY
+                        },
+                        body: JSON.stringify(orderData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok && result.success) {
+                        showMessage('success',
+                            `✓ Pre-Order #${result.order_id} created successfully!`
+                        );
+                        
+                        // Сброс формы
+                        document.getElementById('orderForm').reset();
+                        $('#isinSelect').val(null).trigger('change');
+                        $('#currencyPairSelect').val(null).trigger('change');
+                        document.getElementById('priceGroup').style.display = 'none';
+                        
+                        setTimeout(() => window.close(), 3000);
+                    } else {
+                        throw new Error(result.error || 'Unknown error');
+                    }
+                    
+                } catch (error) {
+                    showMessage('error', `❌ Error: ${error.message}`);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Create Pre-Order';
+                }
+            });
         });
         
         function showMessage(type, html) {
