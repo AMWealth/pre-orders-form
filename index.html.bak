@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="config.js"></script>
+    <title>Create Pre-Order</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 700px;
+            width: 100%;
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
+        .info-box {
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+        .info-box div { margin-bottom: 8px; }
+        .info-box strong { color: #667eea; margin-right: 10px; }
+        .form-group { margin-bottom: 24px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        label .required { color: #e74c3c; }
+        input, select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .message {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            display: none;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        .input-hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+        #priceGroup { display: none; }
+        @media (max-width: 600px) {
+            .row { grid-template-columns: 1fr; }
+            .container { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Create New Pre-Order</h1>
+        <p class="subtitle">Fill in the details below to create a new trading order</p>
+        
+        <div class="info-box">
+            <div><strong>Consultant:</strong> <span id="consultantInfo">Loading...</span></div>
+            <div><strong>Client:</strong> <span id="clientInfo">Loading...</span></div>
+        </div>
+
+        <form id="orderForm">
+            <div class="form-group">
+                <label for="isin">ISIN <span class="required">*</span></label>
+                <input type="text" id="isin" required placeholder="US0378331005" 
+                       pattern="[A-Z]{12}" maxlength="12" minlength="12">
+                <div class="input-hint">12 uppercase letters (e.g., US0378331005)</div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label for="orderType">Order Type <span class="required">*</span></label>
+                    <select id="orderType" required>
+                        <option value="">Select...</option>
+                        <option value="Buy">🟢 Buy</option>
+                        <option value="Sell">🔴 Sell</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="executionType">Execution Type <span class="required">*</span></label>
+                    <select id="executionType" required>
+                        <option value="">Select...</option>
+                        <option value="Market">📈 Market</option>
+                        <option value="Limit">🎯 Limit</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label for="quantity">Quantity <span class="required">*</span></label>
+                    <input type="number" id="quantity" required min="0.0001" step="0.0001" placeholder="10.5">
+                    <div class="input-hint">Can be fractional</div>
+                </div>
+
+                <div class="form-group" id="priceGroup">
+                    <label for="price">Price per Share <span class="required">*</span></label>
+                    <input type="number" id="price" min="0.01" step="0.01" placeholder="150.00">
+                    <div class="input-hint">USD</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="comment">Comment / Notes</label>
+                <input type="text" id="comment" placeholder="Optional" maxlength="500">
+            </div>
+
+            <button type="submit" id="submitBtn">Create Pre-Order</button>
+        </form>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+
+    let API_URL = '';
+    let API_KEY = '';
+
+// Загружаем конфиг с сервера
+    async function loadConfig() {
+        try {
+            const response = await fetch('https://amwealth-preorders-api-ana9f3gkajd2bsga.uaenorth-01.azurewebsites.net/api/config');
+            const config = await response.json();
+            API_URL = config.apiUrl;
+            API_KEY = config.apiKey;
+        } catch (error) {
+            console.error('Failed to load config:', error);
+        }
+    }
+
+// Загружаем конфиг при загрузке страницы
+loadConfig();
+        const urlParams = new URLSearchParams(window.location.search);
+        const consultantId = urlParams.get('consultantId') || '';
+        const consultantName = urlParams.get('consultantName') || 'Not specified';
+        const clientId = urlParams.get('clientId') || '';
+        const clientName = urlParams.get('clientName') || 'Not specified';
+
+        document.getElementById('consultantInfo').textContent = consultantName;
+        document.getElementById('clientInfo').textContent = clientName;
+		document.getElementById('orderForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+    
+    // Убедимся что конфиг загружен
+        if (!API_URL || !API_KEY) {
+            await loadConfig();
+        }
+
+        // Показать/скрыть поле Price в зависимости от Execution Type
+        document.getElementById('executionType').addEventListener('change', function() {
+            const priceGroup = document.getElementById('priceGroup');
+            const priceInput = document.getElementById('price');
+            
+            if (this.value === 'Limit') {
+                priceGroup.style.display = 'block';
+                priceInput.required = true;
+            } else {
+                priceGroup.style.display = 'none';
+                priceInput.required = false;
+                priceInput.value = '';
+            }
+        });
+
+        // Автоматическое приведение ISIN к верхнему регистру
+        document.getElementById('isin').addEventListener('input', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        // Обработка отправки формы
+        document.getElementById('orderForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const messageDiv = document.getElementById('message');
+            
+            if (!consultantId || !clientId) {
+                showMessage('error', 'Missing required parameters from Power BI');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Creating Order... <span class="loader"></span>';
+            
+            const orderData = {
+                consultant_id: consultantId,
+                consultant_name: consultantName,
+                client_id: clientId,
+                client_name: clientName,
+                isin: document.getElementById('isin').value.toUpperCase(),
+                order_type: document.getElementById('orderType').value,
+                execution_type: document.getElementById('executionType').value,
+                quantity: parseFloat(document.getElementById('quantity').value),
+                price: document.getElementById('price').value ? parseFloat(document.getElementById('price').value) : null,
+                comment: document.getElementById('comment').value || null,
+                created_by: consultantName
+            };
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+			            'x-functions-key': API_KEY
+                    },
+                    body: JSON.stringify(orderData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    showMessage('success', 
+                        `✓ Pre-Order #${result.order_id} created successfully!`
+                    );
+                    document.getElementById('orderForm').reset();
+                    document.getElementById('priceGroup').style.display = 'none';
+                    setTimeout(() => window.close(), 3000);
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+                
+            } catch (error) {
+                showMessage('error', `❌ Error: ${error.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Pre-Order';
+            }
+        });
+        
+        function showMessage(type, html) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = 'message ' + type;
+            messageDiv.innerHTML = html;
+            messageDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
