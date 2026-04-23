@@ -41,7 +41,7 @@ def create_order(req: func.HttpRequest) -> func.HttpResponse:
         logger.info(f'Creating order: {order_data.isin}')
         
         insert_query = """
-            INSERT INTO orders (
+            INSERT INTO clients_service.pre_orders (
                 consultant_id, consultant_name, client_id, client_name,
                 isin, order_type, execution_type, quantity, price,
                 expiry_date, comment, created_by, status
@@ -124,7 +124,7 @@ def get_orders(req: func.HttpRequest) -> func.HttpResponse:
                    client_id, client_name, isin, order_type, execution_type,
                    quantity, price, total_amount, status, expiry_date,
                    comment, created_date, created_by, response_date
-            FROM orders WHERE 1=1
+            FROM clients_service.pre_orders WHERE 1=1
         """
         
         params = []
