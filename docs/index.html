@@ -138,6 +138,7 @@
         .select2-container--default .select2-selection--single .select2-selection__rendered {
             line-height: 26px !important;
             padding-left: 0 !important;
+            color: #333 !important;
         }
         .select2-container--default .select2-selection--single .select2-selection__arrow {
             height: 46px !important;
@@ -145,6 +146,22 @@
         .select2-container--default.select2-container--focus .select2-selection--single {
             border-color: #667eea !important;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        }
+        /* Dropdown меню Select2 */
+        .select2-dropdown {
+            border: 2px solid #667eea !important;
+            border-radius: 8px !important;
+        }
+        .select2-results__option {
+            padding: 10px 14px !important;
+        }
+        .select2-results__option--highlighted {
+            background-color: #667eea !important;
+        }
+        .select2-search__field {
+            border: 2px solid #e0e0e0 !important;
+            border-radius: 6px !important;
+            padding: 8px !important;
         }
     </style>
 </head>
@@ -283,32 +300,35 @@
         let currenciesData = [];
 
         // Загрузка списка инструментов
-        async function loadSecurities() {
-            try {
-                const response = await fetch('https://amwealth-preorders-api-ana9f3gkajd2bsga.uaenorth-01.azurewebsites.net/api/instruments/securities');
-                const data = await response.json();
-                if (data.success) {
-                    securitiesData = data.securities;
-                    
-                    // Заполняем dropdown
-                    const select = $('#isinSelect');
-                    select.empty();
-                    select.append('<option value="">Search and select ISIN...</option>');
-                    
-                    data.securities.forEach(sec => {
-                        select.append(new Option(sec.display, sec.isin));
-                    });
-                    
-                    // Инициализация Select2 с поиском
-                    select.select2({
-                        placeholder: 'Search and select ISIN...',
-                        allowClear: true,
-                        width: '100%'
-                    });
+        // Инициализация Select2 с динамическим поиском для ISIN
+        function initISINSelect() {
+            $('#isinSelect').select2({
+                placeholder: 'Type to search ISIN...',
+                allowClear: true,
+                width: '100%',
+                minimumInputLength: 2, // Начинать поиск с 2 символов
+                ajax: {
+                    url: 'https://amwealth-preorders-api-ana9f3gkajd2bsga.uaenorth-01.azurewebsites.net/api/instruments/securities',
+                    delay: 300, // Задержка перед поиском (мс)
+                    data: function (params) {
+                        return {
+                            search: params.term // Поисковый запрос
+                        };
+                    },
+                    processResults: function (data) {
+                        if (data.success) {
+                            return {
+                                results: data.securities.map(sec => ({
+                                    id: sec.isin,
+                                    text: sec.display
+                                }))
+                            };
+                        }
+                        return { results: [] };
+                    },
+                    cache: true
                 }
-            } catch (error) {
-                console.error('Failed to load securities:', error);
-            }
+            });
         }
 
         // Загрузка валютных пар
@@ -339,7 +359,8 @@
         }
 
         // Загружаем данные при загрузке страницы
-        loadSecurities();
+        // Инициализируем Select2 dropdowns
+        initISINSelect();
         loadCurrencyPairs();
 
         // Переключение между Security и Currency
