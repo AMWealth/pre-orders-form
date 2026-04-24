@@ -130,22 +130,38 @@
         }
         .select2-container--default .select2-selection--single {
             height: 48px !important;
-            padding: 10px 14px !important;
             border: 2px solid #e0e0e0 !important;
             border-radius: 8px !important;
             font-size: 15px !important;
+            display: flex !important;
+            align-items: center !important;
         }
+        
         .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 26px !important;
-            padding-left: 8px !important;
-            padding-right: 40px !important;
+            line-height: normal !important;
+            padding: 0 14px !important;
+            margin: 0 !important;
+            padding-right: 50px !important;
             color: #333 !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
             white-space: nowrap !important;
+            display: block !important;
+            width: 100% !important;
         }
+        
         .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 46px !important;
+            height: 48px !important;
+            top: 0 !important;
+            right: 10px !important;
+        }
+        
+        .select2-container--default .select2-selection--single .select2-selection__clear {
+            position: absolute !important;
+            right: 35px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            font-size: 18px !important;
         }
         .select2-container--default.select2-container--focus .select2-selection--single {
             border-color: #667eea !important;
@@ -177,18 +193,7 @@
         .select2-container--open .select2-dropdown {
             z-index: 9999 !important;
         }
-        /* Фикс высоты выделенного элемента */
-        .select2-container .select2-selection--single .select2-selection__rendered {
-            display: block !important;
-            padding-left: 8px !important;
-            padding-right: 20px !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            white-space: nowrap !important;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__clear {
-            margin-right: 10px !important;
-        }
+
     </style>
 </head>
 <body>
