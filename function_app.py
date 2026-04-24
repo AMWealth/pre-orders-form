@@ -239,7 +239,7 @@ def get_securities(req: func.HttpRequest) -> func.HttpResponse:
             query += " AND UPPER(currencybase) = %s"
             params.append(currency.upper())
         
-        query += " ORDER BY isin LIMIT 500"
+        query += " ORDER BY isin LIMIT 5000"
         
         logger.info(f'Query: {query}')
         logger.info(f'Params: {params}')
