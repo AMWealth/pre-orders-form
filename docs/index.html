@@ -125,73 +125,17 @@
             .container { padding: 24px; }
         }
         /* Select2 стили */
+        /* Минимальные стили для Select2 */
         .select2-container {
             width: 100% !important;
         }
         .select2-container--default .select2-selection--single {
-            height: 48px !important;
+            min-height: 48px !important;
             border: 2px solid #e0e0e0 !important;
             border-radius: 8px !important;
-            font-size: 15px !important;
-            display: flex !important;
-            align-items: center !important;
-        }
-        
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: normal !important;
-            padding: 0 14px !important;
-            margin: 0 !important;
-            padding-right: 50px !important;
-            color: #333 !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            white-space: nowrap !important;
-            display: block !important;
-            width: 100% !important;
-        }
-        
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 48px !important;
-            top: 0 !important;
-            right: 10px !important;
-        }
-        
-        .select2-container--default .select2-selection--single .select2-selection__clear {
-            position: absolute !important;
-            right: 35px !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            font-size: 18px !important;
         }
         .select2-container--default.select2-container--focus .select2-selection--single {
             border-color: #667eea !important;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
-        }
-        /* Dropdown меню Select2 */
-        .select2-dropdown {
-            border: 2px solid #667eea !important;
-            border-radius: 8px !important;
-        }
-        .select2-results__option {
-            padding: 10px 14px !important;
-        }
-        .select2-results__option--highlighted {
-            background-color: #667eea !important;
-        }
-        .select2-search__field {
-            border: 2px solid #e0e0e0 !important;
-            border-radius: 6px !important;
-            padding: 8px !important;
-		}
-        /* Фикс для Select2 dropdown */
-        .select2-container--default .select2-selection--single .select2-selection__placeholder {
-            color: #999 !important;
-        }
-        .select2-container--default .select2-results > .select2-results__options {
-            max-height: 300px !important;
-        }
-        .select2-container--open .select2-dropdown {
-            z-index: 9999 !important;
         }
 
     </style>
