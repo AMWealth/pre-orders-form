@@ -224,7 +224,7 @@ def get_securities(req: func.HttpRequest) -> func.HttpResponse:
             WHERE trademode = 4
                 AND isin IS NOT NULL
                 AND isin != ''
-                AND path NOT LIKE '%FX%'
+                AND path NOT LIKE '%%FX%%'
         """
         
         params = []
@@ -297,7 +297,7 @@ def get_currency_pairs(req: func.HttpRequest) -> func.HttpResponse:
                 currencybase
             FROM market_service.tab_security_mt5
             WHERE trademode = 4
-                AND path LIKE '%FX%'
+                AND path LIKE '%%FX%%'
             ORDER BY symbol
         """
         
